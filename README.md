@@ -20,7 +20,7 @@ Follow these steps to integrate the `responseModePlugin` into your Shaka Player 
     Also, you can use jsDelivr to get this soruces
     ```html
     <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.14.14/dist/shaka-player.compiled.js"></script>
-    <script src="path/to/responseModePlugin.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/qualabs/shaka-player-cmcd-v2-plugin/responseModePlugin.js"></script>
     ```
 
 2.  **Initialize Shaka Player**:
