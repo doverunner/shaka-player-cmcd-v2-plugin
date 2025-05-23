@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Shaka Player compiled library: -->
+    <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.14.14/dist/shaka-player.compiled.js"></script>
+    <script src="responseModePlugin.js"></script>
+    <!-- Your application source: -->
+    <script>
+        const manifestUri =
+            'https://livesim2.dashif.org/livesim2/chunkdur_1/ato_7/testpic4_8s/Manifest300.mpd';
+
+        function initApp() {
+            // Install built-in polyfills to patch browser incompatibilities.
+            shaka.polyfill.installAll();
+
+            // Check to see if the browser supports the basic APIs Shaka needs.
+            if (shaka.Player.isBrowserSupported()) {
+                // Everything looks good!
+                initPlayer();
+            } else {
+                // This browser does not have the minimum set of APIs we need.
+                console.error('Browser not supported!');
+            }
+        }
+
+        async function initPlayer() {
+            // Create a Player instance.
+            const video = document.getElementById('video');
+            const player = new shaka.Player();
+            
+            player.configure({
+                cmcd: {
+                    version: 2,
+                    enabled: true,
+                    sessionId: 'your-session-id-if-static',
+                    useHeaders: false,
+                }
+            });
+            await player.attach(video);
+
+            // Attach player to the window to make it easy to access in the JS console.
+            window.player = player;
+            
+            // CMCD Response Mode Plugin
+            const responseModePluginConfig = {
+                batchSize: 8, // Number of requests to batch
+                url: 'https://collector-gcloud-function-560723680185.us-east1.run.app/cmcd/response-mode',
+                mode:'json', // Must use JSON for batching
+                includeKeys: ['ts', 'ttfb', 'ttlb', 'url'] // Available keys: ['ts', 'ttfb', 'ttlb', 'url']. THis keys are added to the cmcd keys defined in shaka config
+            }
+            //Attach CMCD Response Mode Plugin            
+            responseModePlugin.enableResponseMode(player, responseModePluginConfig);
+
+            // Listen for error events.
+            player.addEventListener('error', onErrorEvent);
+
+            // Try to load a manifest.
+            // This is an asynchronous process.
+            try {
+                await player.load(manifestUri);
+                // This runs if the asynchronous load is successful.
+                console.log('The video has now been loaded!');
+            } catch (e) {
+                // onError is executed if the asynchronous load fails.
+                onError(e);
+            }
+        }
+
+        function onErrorEvent(event) {
+        // Extract the shaka.util.Error object from the event.
+        onError(event.detail);
+        }
+
+        function onError(error) {
+        // Log the error.
+        console.error('Error code', error.code, 'object', error);
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+  </head>
+  <body>
+    <video id="video"
+           width="640"
+           controls autoplay></video>
+  </body>
+</html>
