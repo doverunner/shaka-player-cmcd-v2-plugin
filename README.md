@@ -6,6 +6,9 @@ The `responseModePlugin` is a JavaScript module designed to work with Shaka Play
 
 This plugin can be used alongside Shaka Player's native CMCD (Common Media Client Data) features.
 
+## Samples
+This repo has two samples to try the plugin, `sample-shaka-3-3-1.html` and `sample-shaka-latest.html`. One showcases how this plugin works with the oldest Shaka Player version that has support for CMCD (v3.3.1), and the other with the latest version of Shaka Player published on NPM.
+
 ## Setup and Integration
 
 Follow these steps to integrate the `responseModePlugin` into your Shaka Player application:
