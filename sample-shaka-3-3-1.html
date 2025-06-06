@@ -32,7 +32,8 @@
                 cmcd: {
                     version: 2,
                     enabled: true,
-                    sessionId: 'your-session-id-if-static',
+                    // If no sessionId is provided, it will be generated automatically.
+                    // sessionId: 'change-me-if-you-know-the-session-id', 
                     useHeaders: false,
                 }
             });
@@ -43,10 +44,12 @@
             
             // CMCD Response Mode Plugin
             const responseModePluginConfig = {
-                batchSize: 8, // Number of requests to batch
-                url: 'https://collector-gcloud-function-560723680185.us-east1.run.app/cmcd/response-mode',
                 mode:'json', // Must use JSON for batching
-                includeKeys: ['ts', 'ttfb', 'ttlb', 'url'] // Available keys: ['ts', 'ttfb', 'ttlb', 'url']. THis keys are added to the cmcd keys defined in shaka config
+                batchSize: 8, // Number of requests to batch
+                // TODO: Change this URL to your own collector endpoint
+                url: 'https://collector-gcloud-function-560723680185.us-east1.run.app/cmcd/response-mode',
+                // Uncoment to controll which keys are included in the CMCD v2 response
+                // includeKeys: ['ts', 'ttfb', 'ttlb', 'url'] // Available keys: ['ts', 'ttfb', 'ttlb', 'url']. THis keys are added to the cmcd keys defined in shaka config
             }
             //Attach CMCD Response Mode Plugin            
             responseModePlugin.enableResponseMode(player, responseModePluginConfig);

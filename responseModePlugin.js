@@ -76,40 +76,75 @@
                     // Populate cmcdJsonObjectForBody with initial CMCD data from the URL
                     parseAndAddCmcdFromString(requestUri.searchParams.get('CMCD') || '', cmcdJsonObjectForBody);
                     
-                    const { originalRequest, timeMs } = response;
+                    let key, value;
 
+                    const { originalRequest, timeMs } = response;
                     if (originalRequest) {
+                        
                         // Add 'ts' (timestamp) CMCD key: Time request was initiated (epoch ms).
-                        const tsKey = 'ts';
-                        if (typeof originalRequest.requestStartTime === 'number' && config.includeKeys.includes(tsKey)) {
-                            const tsValue = Math.round(originalRequest.requestStartTime);
-                            cmcdJsonObjectForBody[tsKey] = tsValue;
-                            newCmcdPairs.push(`${tsKey}=${tsValue}`);
+                        key = 'ts';
+                        if (typeof originalRequest.requestStartTime === 'number' && (config.includeKeys === undefined || config.includeKeys.includes(key))) {
+                            value = Math.round(originalRequest.requestStartTime);
+                            cmcdJsonObjectForBody[key] = value;
+                            newCmcdPairs.push(`${key}=${value}`);
                         }
 
                         // Add 'ttfb' (Time To First Byte) CMCD key.
-                        const ttfbKey = 'ttfb';
-                        if (typeof originalRequest.timeToFirstByte === 'number' && config.includeKeys.includes(ttfbKey)) {
-                            const ttfbValue = Math.round(originalRequest.timeToFirstByte);
-                            cmcdJsonObjectForBody[ttfbKey] = ttfbValue;
-                            newCmcdPairs.push(`${ttfbKey}=${ttfbValue}`);
+                        key = 'ttfb';
+                        if (typeof originalRequest.timeToFirstByte === 'number' && (config.includeKeys === undefined || config.includeKeys.includes(key))) {
+                            value = Math.round(originalRequest.timeToFirstByte);
+                            cmcdJsonObjectForBody[key] = value;
+                            newCmcdPairs.push(`${key}=${value}`);
                         }
 
                         // Add 'ttlb' (Time To Last Byte) CMCD key: Duration from request start to last byte.
-                        const ttlbKey = 'ttlb';
-                        if (timeMs && typeof timeMs === 'number' && config.includeKeys.includes(ttlbKey)) {
-                            const ttlbValue = Math.round(timeMs);
-                            cmcdJsonObjectForBody[ttlbKey] = ttlbValue;
-                            newCmcdPairs.push(`${ttlbKey}=${ttlbValue}`);
+                        key = 'ttlb';
+                        if (timeMs && typeof timeMs === 'number' && (config.includeKeys === undefined || config.includeKeys.includes(key))) {
+                            value = Math.round(timeMs);
+                            cmcdJsonObjectForBody[key] = value;
+                            newCmcdPairs.push(`${value}=${value}`);
                         }
                     }
 
+                    // Add 'rc' (Response code) CMCD key: Response code of the HTTP Request.                       
+                    key = 'rc';
+                    if (response && response.statusCode && (config.includeKeys === undefined || config.includeKeys.includes(key))) {
+                        value = response.statusCode
+                        cmcdJsonObjectForBody[key] = value;
+                        newCmcdPairs.push(`${key}=${value}`);
+                    } 
+
                     // Add the 'url' (URL) CMCD key
-                    const urlKey = 'url';
-                    const urlValue = response.uri;
-                    cmcdJsonObjectForBody[urlKey] = urlValue;
-                    const escapedUrlValue = urlValue.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-                    newCmcdPairs.push(`${urlKey}="${escapedUrlValue}"`);
+                    key = 'url';
+                    value = response.uri;
+                    cmcdJsonObjectForBody[key] = value;
+                    const escapedUrlValue = value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+                    newCmcdPairs.push(`${key}="${escapedUrlValue}"`);
+
+                    
+                    // Add the 'pt' (Playhead time) CMCD key: Current playhead time in seconds if VOD or time if Live.
+                    // Important: 'pt' key should be calculated at the request, not response, but we do it here for simplicity but adding some error.
+                    key = 'pt';
+                    if (player.isLive()) {
+                        value = player.getPlayheadTimeAsDate().getTime();
+                    } else {
+                        value = player.getMediaElement().currentTime
+                    }
+                    cmcdJsonObjectForBody[key] = value;
+                    newCmcdPairs.push(`${key}=${value}`);
+
+                    // Add the 'ltc' (Live Latency) CMCD key if not found for live streams.
+                    // Important: 'ltc' key should be calculated at the request, not response, but we do it here for simplicity but adding some error.
+                    key = 'ltc';
+                    if (player.isLive()) {
+                        if (!cmcdJsonObjectForBody[key]) {
+                            console.log( 'Adding live latency to CMCD data');
+                            value = player.getStats().liveLatency * 1000;
+                            cmcdJsonObjectForBody[key] = value;
+                            newCmcdPairs.push(`${key}=${value}`);
+                        }
+                    }
+
                     const reportUrl = new URL(config.url);
                     if (currentMode == 'json'){
                         cmcdBatchArray.push(cmcdJsonObjectForBody);
