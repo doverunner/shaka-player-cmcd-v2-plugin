@@ -81,7 +81,7 @@ Follow these steps to integrate the `responseModePlugin` into your Shaka Player 
         mode: 'json', // Specify 'json' or 'query'. 
         batchSize: 8, // Batch is only availabe with json mode
         url: reportingUrlString, // The URL object for the reporting endpoint
-        // includeKeys: ['ts', 'ttfb', 'ttlb', 'url', 'pt', 'rc'] // Will send all keys if not configured, Available keys: ['ts', 'ttfb', 'ttlb', 'url', 'pt', 'rc']
+        // includeKeys: ['ts', 'ttfb', 'ttlb', 'url', 'pt', 'rc', 'ltc'] // Will send all keys if not configured, Available keys: ['ts', 'ttfb', 'ttlb', 'url', 'pt', 'rc', 'ltc]
     };
     ```
 
