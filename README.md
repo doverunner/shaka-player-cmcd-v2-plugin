@@ -66,6 +66,8 @@ Follow these steps to integrate the `responseModePlugin` into your Shaka Player 
         cmcd: {
             version: 2,
             enabled: true,
+            // Change the contentId value, it's a unique identifier for the content.
+            contentId: 'your-content-id',
             //sessionId: 'your-unique-session-id', // Auto generate UUID or uncomment to fix a session id
             useHeaders: false, //The plugin only works with CMCD in queryparams
         }
