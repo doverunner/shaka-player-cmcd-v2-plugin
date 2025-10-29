@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Shaka Player - CMCD v2 Event Mode Example</title>
+    <!-- Shaka Player compiled library -->
+    <script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.compiled.js"></script>
+    <script src="eventModePlugin.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #video {
+            max-width: 100%;
+            height: auto;
+        }
+        .config-section {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        .config-section h3 {
+            margin-top: 0;
+        }
+        .config-section pre {
+            background-color: #fff;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        .info {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+    </style>
+  </head>
+  <body>
+    <h1>Shaka Player - CMCD v2 Event Mode Plugin Example</h1>
+
+    <div class="info">
+        <strong>Event Mode Features:</strong>
+        <ul>
+            <li>✅ JSON batch transmission support</li>
+            <li>✅ Batch size configuration (batchSize)</li>
+            <li>✅ Batch timer configuration (batchTimer)</li>
+            <li>✅ Time interval periodic reporting (timeInterval)</li>
+            <li>✅ Player state events (play, pause, seeking, buffering, etc.)</li>
+            <li>✅ UI events (mute/unmute, fullscreen, PiP, background mode)</li>
+            <li>✅ Error events with error codes</li>
+            <li>✅ Query and JSON transmission modes</li>
+            <li>✅ Event filtering (events)</li>
+            <li>✅ Key filtering (includeKeys)</li>
+        </ul>
+    </div>
+
+    <video id="video" width="640" controls autoplay></video>
+
+    <div class="config-section">
+        <h3>Current Configuration</h3>
+        <pre id="config-display"></pre>
+    </div>
+
+    <div class="config-section">
+        <h3>How to Configure</h3>
+        <pre>
+const eventModePluginConfig = {
+    mode: 'json',              // 'json' or 'query'
+    batchSize: 5,              // Number of events to batch before sending
+    batchTimer: 30,            // Send batch every 10 seconds (optional)
+    timeInterval: 10,          // Send periodic report every 30 seconds (optional)
+    url: 'YOUR_COLLECTOR_URL', // Your CMCD collector endpoint
+
+    // Optional: Filter which events to report
+    events: ['ps', 't', 'e'],  // ps=playState, t=timeInterval, e=error, m=mute, um=unmute, pe=playerExpand, pc=playerCollapse, b=background
+
+    // Optional: Filter which CMCD keys to include
+    includeKeys: ['e', 'sta', 'ts', 'v', 'sid', 'cid', 'sf', 'mtp', 'pr', 'bg', 'st', 'ltc', 'pt', 'msd', 'df', 'sn', 'ec']
+};
+
+// Enable the plugin
+eventModePlugin.enableEventMode(player, eventModePluginConfig);
+        </pre>
+    </div>
+
+    <script>
+        const manifestUri = 'https://livesim2.dashif.org/livesim2/chunkdur_1/ato_7/testpic4_8s/Manifest300.mpd';
+
+        function initApp() {
+            shaka.polyfill.installAll();
+
+            if (shaka.Player.isBrowserSupported()) {
+                initPlayer();
+            } else {
+                console.error('Browser not supported!');
+            }
+        }
+
+        async function initPlayer() {
+            const video = document.getElementById('video');
+            const player = new shaka.Player();
+
+            // Configure Shaka Player with CMCD
+            player.configure({
+                cmcd: {
+                    version: 2,
+                    enabled: true,
+                    // contentId: 'event-mode-test-content',
+                    // sessionId: 'session-' + Date.now(),
+                    useHeaders: false,
+                }
+            });
+
+            await player.attach(video);
+            window.player = player;
+
+            // CMCD Event Mode Plugin Configuration
+            const eventModePluginConfig = {
+                mode: 'json',              // Use JSON for batching (change to 'query' for individual requests)
+                batchSize: 5,              // Send batch when 5 events are accumulated
+                batchTimer: 10,            // Also send batch every 10 seconds
+                timeInterval: 30,          // Send periodic time interval event every 30 seconds
+
+                // TODO: Change this URL to your own collector endpoint
+                url: 'http://localhost:3000/cmcd/event-mode',
+
+                // Optional: Filter specific events (comment out to include all events)
+                // events: ['ps', 't', 'e', 'm', 'um'],
+
+                // Optional: Filter specific CMCD keys (comment out to include all keys)
+                // includeKeys: ['e', 'sta', 'ts', 'v', 'sid', 'cid', 'sf', 'mtp', 'pr', 'bg', 'st', 'sn']
+            };
+
+            // Display configuration
+            document.getElementById('config-display').textContent = JSON.stringify(eventModePluginConfig, null, 2);
+
+            // Enable CMCD Event Mode Plugin
+            const cleanup = eventModePlugin.enableEventMode(player, eventModePluginConfig);
+
+            // Store cleanup function for later use
+            window.cleanupEventMode = cleanup;
+
+            // Listen for error events
+            player.addEventListener('error', onErrorEvent);
+
+            // Try to load a manifest
+            try {
+                await player.load(manifestUri);
+                console.log('The video has now been loaded!');
+            } catch (e) {
+                onError(e);
+            }
+        }
+
+        function onErrorEvent(event) {
+            onError(event.detail);
+        }
+
+        function onError(error) {
+            console.error('Error code', error.code, 'object', error);
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+  </body>
+</html>
